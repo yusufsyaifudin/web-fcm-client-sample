@@ -11,18 +11,20 @@ const messaging = project.messaging();
 
 // Get Instance ID token. Initially this makes a network call, once retrieved
 // subsequent calls to getToken will return from cache.
-messaging.getToken().then((currentToken) => {
-    if (currentToken) {
-        document.getElementById("token").innerHTML = `Current token: ${currentToken}`;
-        console.log('Current token:', currentToken);
-    } else {
-        // Show permission request.
-        document.getElementById("token").innerHTML = 'No Instance ID token available. Request permission to generate one.'
-        console.log('No Instance ID token available. Request permission to generate one.');
-    }
-}).catch((err) => {
-    console.log('An error occurred while retrieving token. ', err);
-});
+function getToken() {
+    messaging.getToken().then((currentToken) => {
+        if (currentToken) {
+            document.getElementById("token").innerHTML = `Current token: ${currentToken}`;
+            console.log('Current token:', currentToken);
+        } else {
+            // Show permission request.
+            document.getElementById("token").innerHTML = 'No Instance ID token available. Request permission to generate one.'
+            console.log('No Instance ID token available. Request permission to generate one.');
+        }
+    }).catch((err) => {
+        console.log('An error occurred while retrieving token. ', err);
+    });
+}
 
 // Callback fired if Instance ID token is updated.
 messaging.onTokenRefresh(() => {
@@ -43,7 +45,7 @@ messaging.onTokenRefresh(() => {
 // - the user clicks on an app notification created by a service worker
 //   `messaging.setBackgroundMessageHandler` handler.
 messaging.onMessage((payload) => {
-    document.getElementById("message").innerHTML = `Message received: ${payload}`;
+    document.getElementById("message").innerHTML = JSON.stringify(payload);
     console.log('Message received. ', payload);
 });
 // [END receive_message]
@@ -57,10 +59,25 @@ function requestPermission() {
             console.log('Notification permission granted.');
         } else {
             document.getElementById("log").innerHTML = `Unable to get permission to notify.`;
-            console.log('Unable to get permission to notify.');
+            console.log('Unable to get permission to notify.', permission);
         }
     });
     // [END request_permission]
 }
 
 requestPermission()
+getToken()
+
+function deleteToken() {
+    // Delete registration token.
+    messaging.getToken().then((currentToken) => {
+        messaging.deleteToken(currentToken).then(() => {
+            console.log('Token deleted.');
+            getToken()
+        }).catch((err) => {
+            console.log('Unable to delete token. ', err);
+        });
+    }).catch((err) => {
+        console.log('Error retrieving registration token. ', err);
+    });
+}
